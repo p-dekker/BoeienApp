@@ -11,16 +11,12 @@ import java.util.logging.Logger;
 
 import javax.xml.rpc.ServiceException;
 
-import org.apache.axis.AxisProperties;
-
 import com.gluonhq.maps.MapLayer;
 import com.gluonhq.maps.MapPoint;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
-import nl.pdekker.boeienapp.MapPOI.POIShape;
 import nl.pdekker.nts.ms_2_0_4_0.Get_messages_query;
 import nl.pdekker.nts.ms_2_0_4_0.Get_messages_result;
 import nl.pdekker.nts.ms_2_0_4_0.Message_type_type;
@@ -34,13 +30,6 @@ public class NtMsgLayer_2_0_4_0 extends MapLayer {
 
 	private static final Logger LOGGER = Logger.getLogger(NtMsgLayer_2_0_4_0.class.getName());
 
-	static {
-		AxisProperties.getProperties().put("proxySet","true");
-
-	    AxisProperties.setProperty("http.proxyHost", "chaos"); 
-	    AxisProperties.setProperty("http.proxyPort", "3128"); 
-	}
-	
 	private final ObservableList<MapPOI> messages = FXCollections.observableArrayList();
 	private final double centerLat;
 	private final double centerLong;
@@ -93,7 +82,7 @@ public class NtMsgLayer_2_0_4_0 extends MapLayer {
 					String label = ftm.getContents();
 					Optional<MapPoint> pos = getPosition(ftm);
 					if (pos.isPresent()) {
-						MapPOI msg = MapPOI.create(label, icon, pos.get(), Color.RED, POIShape.TRIANGLE);
+						MapPOI msg = MapPOI.createNoticeToSkipper(label, icon, pos.get());
 						msgList.add(msg);
 					}
 					

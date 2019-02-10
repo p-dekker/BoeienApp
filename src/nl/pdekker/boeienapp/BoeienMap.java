@@ -29,9 +29,11 @@ package nl.pdekker.boeienapp;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -45,11 +47,15 @@ import com.gluonhq.maps.MapView;
 import com.sun.javafx.PlatformUtil;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -62,7 +68,7 @@ public class BoeienMap extends Application {
 
 	private static final Logger LOGGER = Logger.getLogger(BoeienMap.class.getName());
 	private static final Proxy PROXY = createProxy();
-	
+
 	static {
 		try {
 			LogManager.getLogManager().readConfiguration(BoeienMap.class.getResourceAsStream("/logging.properties"));
@@ -80,24 +86,31 @@ public class BoeienMap extends Application {
 
 		MapView view = new MapView();
 		BoeienLayer layerDrijvend = BoeienLayer.createInstance(Type.DRIJVEND, files.getUrl(Type.DRIJVEND));
-		BoeienLayer layerVast = BoeienLayer.createInstance(Type.VAST,files.getUrl(Type.VAST));
-		
-		NtMsgLayer_2_0_4_0 layerMsg = NtMsgLayer_2_0_4_0.createInstance(new URL("https://www.vaarweginformatie.nl/fdd/nts40"));
-//		NtMsgLayer_2_0_4_0 layerMsgBe = NtMsgLayer_2_0_4_0.createInstance(new URL("https://nts.flaris.be/services/NtsMessageService_v2_0_4_0.svc"));
-//		NtMsgLayer_2_0_4_0 layerMsgAT = NtMsgLayer_2_0_4_0.createInstance(new URL("http://nts.doris.bmvit.gv.at/NtSMessageService/getMessages"));
-//		NtMsgLayer_1_0_3_0 layerMsgDE = NtMsgLayer_1_0_3_0.createInstance(new URL("http://nts.elwis.de/server/MessageServer.php"));
-		
+		BoeienLayer layerVast = BoeienLayer.createInstance(Type.VAST, files.getUrl(Type.VAST));
+
+		NtMsgLayer_2_0_4_0 layerMsg = NtMsgLayer_2_0_4_0
+				.createInstance(new URL("https://www.vaarweginformatie.nl/fdd/nts40"));
+		// NtMsgLayer_2_0_4_0 layerMsgBe = NtMsgLayer_2_0_4_0.createInstance(new
+		// URL("https://nts.flaris.be/services/NtsMessageService_v2_0_4_0.svc"));
+		// NtMsgLayer_2_0_4_0 layerMsgAT = NtMsgLayer_2_0_4_0.createInstance(new
+		// URL("http://nts.doris.bmvit.gv.at/NtSMessageService/getMessages"));
+		// NtMsgLayer_1_0_3_0 layerMsgDE = NtMsgLayer_1_0_3_0.createInstance(new
+		// URL("http://nts.elwis.de/server/MessageServer.php"));
+
 		view.addLayer(layerDrijvend);
 		view.addLayer(layerVast);
 		view.addLayer(layerMsg);
-//		view.addLayer(layerMsgBe);
-//		view.addLayer(layerMsgAT);
-//		view.addLayer(layerMsgDE);
-		
+		// view.addLayer(layerMsgBe);
+		// view.addLayer(layerMsgAT);
+		// view.addLayer(layerMsgDE);
+
 		view.setZoom(4);
 		Scene scene;
 		if (Platform.isDesktop()) {
-			scene = new Scene(view, 600, 700);
+			BorderPane bp = new BorderPane();
+			bp.setCenter(view);
+			bp.setLeft(createSettingsView(Arrays.asList(layerDrijvend, layerVast)));
+			scene = new Scene(bp, 600, 700);
 			stage.setTitle("Boeien In Nederland");
 		} else {
 			BorderPane bp = new BorderPane();
@@ -115,17 +128,25 @@ public class BoeienMap extends Application {
 		view.flyTo(1., layerDrijvend.getCenter(), 2.);
 	}
 
+	private Pane createSettingsView(List<BoeienLayer> boeienLayers) {
+		final VBox vbox = new VBox();
+		vbox.setPadding(new Insets(10));
+		vbox.setSpacing(8);
+		final DatePicker datePicker = new DatePicker();
+		datePicker.setValue(LocalDate.now().minusWeeks(1));
+		boeienLayers.stream().forEach(l -> l.fromDate().bind(datePicker.valueProperty()));
+		vbox.getChildren().add(datePicker);
+		return vbox;
+	}
+
 	private static Proxy createProxy() {
-		return new Proxy(java.net.Proxy.Type.HTTP, new InetSocketAddress("chaos.keygene.local", 3128));
+		return Proxy.NO_PROXY;
+		// return new Proxy(java.net.Proxy.Type.HTTP, new
+		// InetSocketAddress("chaos.keygene.local", 3128));
 	}
 
 	public static void main(String[] args) {
 
-		System.setProperty("http.proxyHost", "chaos.keygene.local");
-		System.setProperty("http.proxyPort", "3128");
-		System.setProperty("https.proxyHost", "chaos.keygene.local");
-		System.setProperty("https.proxyPort", "3128");
-		
 		if (PlatformUtil.isWindows() || PlatformUtil.isMac() || PlatformUtil.isUnix()) {
 			System.setProperty("javafx.platform", "Desktop");
 		}

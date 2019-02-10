@@ -10,6 +10,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class BoeienBestanden {
 		if (homeDir.isPresent()) {
 			try {
 				downloadFiles();
-			} catch (IOException e) {
+			} catch (IOException | ParseException e) {
 				LOGGER.severe(e.getMessage());
 			}
 		}
@@ -66,7 +67,7 @@ public class BoeienBestanden {
 		return localFiles.get(type);
 	}
 
-	private void downloadFiles() throws IOException {
+	private void downloadFiles() throws IOException, ParseException {
 		LocalDate now = LocalDate.now();
 		File downloadpage = new File(homeDir.get().toFile(), downloadPageFile);
 		if (downloadpage.exists()) {
@@ -95,7 +96,7 @@ public class BoeienBestanden {
 		return false;
 	}
 
-	private boolean replaceLocalFileWithRemote(final Type type, Document doc) {
+	private void replaceLocalFileWithRemote(final Type type, Document doc) throws ParseException {
 		try {
 		Path dir = homeDir.get();
 		Optional<Path> local = findCachedFile(type);
@@ -113,8 +114,7 @@ public class BoeienBestanden {
 				String content = url.openConnection(proxy).getHeaderField("Content-Disposition");
 				Matcher m = filenameInHeader.matcher(content);
 				if (!m.matches()) {
-					LOGGER.severe("Can't parse remote filename..");
-					return false;
+					throw new ParseException("Can't parse remote filename: " + content, 0);
 				}
 				String filename = m.group(1); 
 				File localFile = new File(dir.toFile(), filename);
@@ -122,14 +122,16 @@ public class BoeienBestanden {
 				if (succes && local.isPresent()) {
 					Files.delete(local.get());
 					localFiles.put(type,localFile.toURI().toURL());
+					return;
 				}
-				return true;
+			}
+			if (local.isPresent()) {
+				localFiles.put(type, local.get().toUri().toURL());
 			}
 		}
 		} catch ( IOException e) {
 			LOGGER.severe(e.getMessage());
 		}
-		return false;
 	}
 
 	private Optional<LocalDate> getCachedDate(final Type type) {
