@@ -1,0 +1,16 @@
+feb. 11, 2019 3:44:01 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienBestanden <init>
+INFO: file:/C:/Users/nancy/.boeienApp/1900201_DNZ_002b_Markeringen_vast.csv
+feb. 11, 2019 3:44:01 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienBestanden <init>
+INFO: file:/C:/Users/nancy/.boeienApp/1900201_DNZ_002a_Markeringen_drijvend.csv
+feb. 11, 2019 3:44:07 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienLayer <init>
+INFO: found 9341 boeien in file
+feb. 11, 2019 3:44:12 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienLayer <init>
+INFO: found 8553 boeien in file
+feb. 11, 2019 3:44:13 P.M. org.apache.axis.utils.JavaUtils isAttachmentSupported
+WARNING: Unable to find required classes (javax.activation.DataHandler and javax.mail.internet.MimeMultipart). Attachment support is disabled.
+feb. 11, 2019 3:44:17 P.M. nl.pdekker.boeienapp.ntmsg.NtMsgLayer_2_0_4_0 <init>
+INFO: found 51 messages recieved
+feb. 11, 2019 3:44:23 P.M. com.gluonhq.impl.maps.tile.osm.CachedOsmTileRetriever <clinit>
+INFO: hasfilecache = true
+feb. 11, 2019 3:44:26 P.M. com.gluonhq.impl.maps.tile.osm.CachedOsmTileRetriever$CacheThread doCache
+INFO: retrieve http://tile.openstreetmap.org/8/127/114.png and store \8\127\114.png

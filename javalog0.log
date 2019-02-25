@@ -1,0 +1,12 @@
+feb. 12, 2019 12:32:49 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienBestanden <init>
+INFO: file:/C:/Users/nancy/.boeienApp/1900201_DNZ_002b_Markeringen_vast.csv
+feb. 12, 2019 12:32:49 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienBestanden <init>
+INFO: file:/C:/Users/nancy/.boeienApp/1900201_DNZ_002a_Markeringen_drijvend.csv
+feb. 12, 2019 12:32:55 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienLayer <init>
+INFO: found 9341 boeien in file
+feb. 12, 2019 12:32:59 P.M. nl.pdekker.boeienapp.boeienbestand.BoeienLayer <init>
+INFO: found 8553 boeien in file
+feb. 12, 2019 12:33:04 P.M. nl.pdekker.boeienapp.kaarten.KaartenLayer <init>
+INFO: found 3 kaarten in file
+feb. 12, 2019 12:33:12 P.M. com.gluonhq.impl.maps.tile.osm.CachedOsmTileRetriever <clinit>
+INFO: hasfilecache = true

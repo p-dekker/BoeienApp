@@ -51,13 +51,25 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.CheckBoxListCell;
+import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import nl.pdekker.boeienapp.boeienbestand.BoeienBestanden;
+import nl.pdekker.boeienapp.boeienbestand.BoeienLayer;
+import nl.pdekker.boeienapp.boeienbestand.RWSBestand;
+import nl.pdekker.boeienapp.boeienbestand.Vaarwegen;
+import nl.pdekker.boeienapp.kaarten.KaartenBestand;
+import nl.pdekker.boeienapp.kaarten.KaartenLayer;
+import nl.pdekker.boeienapp.ntmsg.NtMsgLayer_2_0_4_0;
 
 /**
  *
@@ -77,17 +89,21 @@ public class BoeienMap extends Application {
 		}
 	}
 
-	// private MapPoint mapPoint;
-
 	@Override
 	public void start(Stage stage) throws Exception {
 
+		KaartenBestand kaarten = new KaartenBestand();
 		BoeienBestanden files = new BoeienBestanden(PROXY);
 
 		MapView view = new MapView();
-		BoeienLayer layerDrijvend = BoeienLayer.createInstance(Type.DRIJVEND, files.getUrl(Type.DRIJVEND));
-		BoeienLayer layerVast = BoeienLayer.createInstance(Type.VAST, files.getUrl(Type.VAST));
+		
+		Vaarwegen vaarwegen = new Vaarwegen();
+		BoeienLayer layerDrijvend = BoeienLayer.createInstance(RWSBestand.DRIJVEND, files.getUrl(RWSBestand.DRIJVEND), vaarwegen);
+		BoeienLayer layerVast = BoeienLayer.createInstance(RWSBestand.VAST, files.getUrl(RWSBestand.VAST),vaarwegen);
 
+		KaartenLayer layerKaart = KaartenLayer.createInstance(kaarten.asList());
+		view.addLayer(layerKaart);
+		
 		NtMsgLayer_2_0_4_0 layerMsg = NtMsgLayer_2_0_4_0
 				.createInstance(new URL("https://www.vaarweginformatie.nl/fdd/nts40"));
 		// NtMsgLayer_2_0_4_0 layerMsgBe = NtMsgLayer_2_0_4_0.createInstance(new
@@ -104,13 +120,13 @@ public class BoeienMap extends Application {
 		// view.addLayer(layerMsgAT);
 		// view.addLayer(layerMsgDE);
 
-		view.setZoom(4);
+		view.setZoom(8);
 		Scene scene;
 		if (Platform.isDesktop()) {
 			BorderPane bp = new BorderPane();
 			bp.setCenter(view);
-			bp.setLeft(createSettingsView(Arrays.asList(layerDrijvend, layerVast)));
-			scene = new Scene(bp, 600, 700);
+			bp.setLeft(createSettingsView(Arrays.asList(layerDrijvend, layerVast), kaarten, vaarwegen));
+			scene = new Scene(bp, 800, 700);
 			stage.setTitle("Boeien In Nederland");
 		} else {
 			BorderPane bp = new BorderPane();
@@ -128,21 +144,37 @@ public class BoeienMap extends Application {
 		view.flyTo(1., layerDrijvend.getCenter(), 2.);
 	}
 
-	private Pane createSettingsView(List<BoeienLayer> boeienLayers) {
+	private Pane createSettingsView(List<BoeienLayer> boeienLayers, KaartenBestand kaarten, Vaarwegen vaarwegen) {
 		final VBox vbox = new VBox();
 		vbox.setPadding(new Insets(10));
 		vbox.setSpacing(8);
+		
+		CheckBox boeienVanaf = new CheckBox("Boeien vanaf");
+		vbox.getChildren().add(boeienVanaf);
+
 		final DatePicker datePicker = new DatePicker();
-		datePicker.setValue(LocalDate.now().minusWeeks(1));
-		boeienLayers.stream().forEach(l -> l.fromDate().bind(datePicker.valueProperty()));
+		datePicker.setValue(LocalDate.now().minusMonths(1));
+		boeienLayers.stream().forEach(l -> l.bind(datePicker, boeienVanaf));
 		vbox.getChildren().add(datePicker);
+
+		CheckBox kaartenSelect = new CheckBox("Kaarten");
+		vbox.getChildren().add(kaartenSelect);
+        TreeView<String> treeView = new TreeView<String>(kaarten.asTree());
+        treeView.setCellFactory(CheckBoxTreeCell.forTreeView());
+        treeView.setShowRoot(false);
+        vbox.getChildren().add(treeView);
+ 
+        CheckBox vaarwegenSelect = new CheckBox("Vaarwegen");
+        vbox.getChildren().add(vaarwegenSelect);
+        ListView<Vaarwegen.SelectableVaarweg> listView = new ListView<>();
+        listView.getItems().addAll(0, vaarwegen.list);
+        listView.setCellFactory(CheckBoxListCell.forListView( v -> v.selectedProperty()));
+        vbox.getChildren().add(listView);
 		return vbox;
 	}
 
 	private static Proxy createProxy() {
 		return Proxy.NO_PROXY;
-		// return new Proxy(java.net.Proxy.Type.HTTP, new
-		// InetSocketAddress("chaos.keygene.local", 3128));
 	}
 
 	public static void main(String[] args) {
@@ -151,34 +183,28 @@ public class BoeienMap extends Application {
 			System.setProperty("javafx.platform", "Desktop");
 		}
 
-		// define service for desktop
 		StorageService storageService = new StorageService() {
 			@Override
 			public Optional<File> getPrivateStorage() {
-				// user home app config location (linux: /home/[yourname]/.gluonmaps)
 				return Optional.of(new File(System.getProperty("user.home")));
 			}
 
 			@Override
 			public Optional<File> getPublicStorage(String subdirectory) {
-				// this should work on desktop systems because home path is public
 				return getPrivateStorage();
 			}
 
 			@Override
 			public boolean isExternalStorageWritable() {
-				// noinspection ConstantConditions
 				return getPrivateStorage().get().canWrite();
 			}
 
 			@Override
 			public boolean isExternalStorageReadable() {
-				// noinspection ConstantConditions
 				return getPrivateStorage().get().canRead();
 			}
 		};
 
-		// define service factory for desktop
 		ServiceFactory<StorageService> storageServiceFactory = new ServiceFactory<StorageService>() {
 
 			@Override
@@ -194,7 +220,6 @@ public class BoeienMap extends Application {
 		};
 		// register service
 		Services.registerServiceFactory(storageServiceFactory);
-
 		launch(args);
 	}
 }
